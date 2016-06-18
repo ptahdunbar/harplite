@@ -104,7 +104,7 @@ let handlePrettyHtml = (options) => {
     req.template_realpath = path.join(
       options.publicdir,
       template_path
-    ).str_replace(__dirname,'')
+    )
 
     log(
       'Attempting to load HTML file: %s'
@@ -139,7 +139,7 @@ let handleMarkdown = (options) => {
     req.template_realpath = path.join(
       options.publicdir,
       template_path
-    ).str_replace(__dirname,'')
+    )
 
     log(
       'Attempting to load MARKDOWN file: %s'
@@ -194,13 +194,14 @@ let requireAsyncDataFile = (dir, callback) => {
 
 module.exports = (app, userOptions) => {
   let options = userOptions || {
-    slug: 'public',
+    base: 'public',
     _layoutFile: '_layout.ejs',
     marked: {},
     log: false
   }
-  options.basedir = path.dirname(path.resolve(options.slug))
-  options.publicdir = path.resolve(options.slug)
+
+  options.basedir = path.dirname(path.resolve(options.base))
+  options.publicdir = path.resolve(options.base)
 
   log = function() {
     if ( options.log ) {
