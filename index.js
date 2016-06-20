@@ -3,6 +3,7 @@ import path from 'path'
 import fs from 'fs'
 import marked from 'marked'
 import Finder from 'fs-finder'
+import exphbs from 'express-handlebars'
 let log
 
 let shouldIgnore = (filePath) => {
@@ -54,7 +55,7 @@ let disallowPrivateDirectories = (req, res, next) => {
   }
 }
 
-let handleEJS = (options) => {
+let handleEJS = (app, options) => {
   return (req, res, next) => {
     requireAsyncDataFile(options.basedir, (data) => {
       let template_path = req.originalUrl == '/' ? 'index' : req.originalUrl.substring(1)
@@ -77,9 +78,58 @@ let handleEJS = (options) => {
               , req.template_realpath
             )
 
+            app.engine('ejs', require('ejs-mate'))
+            app.set('view engine', 'ejs')
+            app.set('views', options.publicdir)
+
             let vars = {...data, ...options}
 
             log('Sending to EJS:', vars)
+            res.render(req.template_realpath, vars)
+          } else {
+            log(
+              'File not found: %s'
+              , req.template_realpath
+            )
+            next()
+          }
+      })
+    })
+  }
+}
+
+let handleHandleBars = (app, options) => {
+  return (req, res, next) => {
+    requireAsyncDataFile(options.basedir, (data) => {
+      let template_path = req.originalUrl == '/' ? 'index' : req.originalUrl.substring(1)
+
+      req.template_path = template_path
+      req.template_realpath = path.join(
+        options.publicdir
+        , template_path
+      ) + '.hbs'
+
+      log(
+        'Attempting to load Handlebars file: %s'
+        , req.template_realpath
+      )
+
+      fs.exists(req.template_realpath, function(exists) {
+          if (exists) {
+            log(
+              'Requesting view: %s'
+              , req.template_realpath
+            )
+
+            app.engine('.hbs', exphbs(options))
+            app.set('view engine', '.hbs')
+            app.set('views', options.publicdir)
+
+            let vars = {...data, ...options}
+
+            req.template_realpath = req.template_realpath.replace('.hbs', '')
+
+            log('Sending to Handlebars:', req.template_realpath, vars)
             res.render(req.template_realpath, vars)
           } else {
             log(
@@ -195,13 +245,18 @@ let requireAsyncDataFile = (dir, callback) => {
 module.exports = (app, userOptions) => {
   let options = userOptions || {
     base: 'public',
-    _layoutFile: '_layout.ejs',
+    _layoutFile: '_layout',
     marked: {},
-    log: false
+    log: false,
+    // processors: [ 'hbs', 'ejs', 'markdown', 'html' ],
+    extname: '.hbs',
+    partialsDir: 'public/_partials/',
   }
 
   options.basedir = path.dirname(path.resolve(options.base))
   options.publicdir = path.resolve(options.base)
+  options.layoutsDir = path.resolve(options.base)
+  options.defaultLayout = options._layoutFile
 
   log = function() {
     if ( options.log ) {
@@ -209,14 +264,11 @@ module.exports = (app, userOptions) => {
     }
   }
 
-  app.engine('ejs', require('ejs-mate'))
-  app.set('view engine', 'ejs')
-  app.set('views', options.publicdir)
-
   let router = express.Router()
 
   router.use(disallowPrivateDirectories)
-  router.use(handleEJS(options))
+  // router.use(handleHandleBars(app, options))
+  router.use(handleEJS(app, options))
   router.use(handlePrettyHtml(options))
   router.use(handleMarkdown(options))
   router.use(handle404Fallback(options))
