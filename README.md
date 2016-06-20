@@ -1,2 +1,2 @@
 # Harp lite
-> Express middleware for easy HTML, Markdown and EJS publishing.
+> Express middleware for easy HandleBars, EJS, Markdown and HTML publishing.

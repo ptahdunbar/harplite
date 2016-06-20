@@ -1,7 +1,7 @@
 {
   "name": "harplite",
-  "version": "0.2.0",
-  "description": "Express middleware for easy HTML, Markdown and EJS publishing.",
+  "version": "0.2.1",
+  "description": "Express middleware for easy HandleBars, EJS, Markdown and HTML publishing.",
   "license": "GPL-2.0",
   "author": "Pirate Dunbar <npm@piratedunbar.com> (https://piratedunbar.com)",
   "scripts": {
