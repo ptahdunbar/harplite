@@ -267,7 +267,7 @@ module.exports = (app, userOptions) => {
   let router = express.Router()
 
   router.use(disallowPrivateDirectories)
-  // router.use(handleHandleBars(app, options))
+  router.use(handleHandleBars(app, options))
   router.use(handleEJS(app, options))
   router.use(handlePrettyHtml(options))
   router.use(handleMarkdown(options))
